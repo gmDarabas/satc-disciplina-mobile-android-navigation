@@ -6,6 +6,9 @@ import com.example.cacatesouro.ui.theme.CacaTesouroTheme
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,7 +54,14 @@ class MainActivity : ComponentActivity() {
             CacaTesouroTheme {
                 val navigationController = rememberNavController()
                 NavHost(navController = navigationController, startDestination = "telaInicial") {
-                    composable("telaInicial") {
+                    composable("telaInicial",
+                        enterTransition = {
+                            return@composable fadeIn(tween(1000))
+                        }, exitTransition = {
+                            return@composable slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Start, tween(700)
+                            )
+                        }) {
                         TelaInicial { navigationController.navigate("pista01Screen") }
                     }
 
