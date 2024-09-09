@@ -46,13 +46,16 @@ import androidx.navigation.compose.rememberNavController
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             CacaTesouroTheme {
+                val timerViewModel: TimerViewModel = viewModel()
                 val navigationController = rememberNavController()
+
                 NavHost(navController = navigationController, startDestination = "telaInicial") {
                     composable("telaInicial",
                         enterTransition = {
@@ -62,7 +65,7 @@ class MainActivity : ComponentActivity() {
                                 AnimatedContentTransitionScope.SlideDirection.Start, tween(700)
                             )
                         }) {
-                        TelaInicial { navigationController.navigate("pista01Screen") }
+                        TelaInicial(timerViewModel) { navigationController.navigate("pista01Screen") }
                     }
 
                     composable("pista01Screen") {
@@ -83,7 +86,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("telaFinal") {
-                        TelaFinal {
+                        TelaFinal(timerViewModel) {
                             navigationController.navigate("telaInicial") {
                                 popUpTo(0)
                             }
@@ -101,6 +104,7 @@ fun TelaGenerica(
     tituloTopBar: String,
     descricao: String,
     btnText: String,
+    timerVm: TimerViewModel,
     onBtnClick: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -141,33 +145,52 @@ fun TelaGenerica(
             ) {
                 Text(text = btnText)
             }
+
+            Text(
+                text = "Tempo: " + timerVm.formattedTime(),
+                fontSize = 18.sp,
+                color = Color.DarkGray
+            )
         }
     }
 }
 
 @Composable
-fun TelaInicial(onStartClicked: () -> Unit) {
+fun TelaInicial(timerVm: TimerViewModel, onStartClicked: () -> Unit) {
     val activity = (LocalContext.current as? Activity)
     TelaGenerica(
         titulo = "Caça ao Tesouro",
         tituloTopBar = "Home",
         descricao = "Resolva os enigmas",
         btnText = "Iniciar Caça",
-        onBtnClick = onStartClicked,
+        timerVm = timerVm,
+        onBtnClick = {
+            timerVm.resetTimer()
+            timerVm.startTimer()
+            onStartClicked()
+        },
         onBack = { activity?.finish() }
     )
 }
 
 
 @Composable
-fun TelaFinal(goHome: () -> Unit) {
+fun TelaFinal(timerVm: TimerViewModel, goHome: () -> Unit) {
+    timerVm.calculateTotalTime()
+
+    val onClickFun: () -> Unit = {
+        timerVm.resetTimer()
+        goHome()
+    }
+
     TelaGenerica(
         titulo = "Parabéns!!",
         tituloTopBar = "Voltar",
         descricao = "Você completou todos desafios!",
         btnText = "Voltar para tela inicial",
-        onBtnClick = goHome,
-        onBack = goHome
+        timerVm = timerVm,
+        onBtnClick = onClickFun,
+        onBack = onClickFun
     )
 }
 
